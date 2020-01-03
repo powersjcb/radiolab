@@ -3,10 +3,17 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/powersjcb/radiolab/core"
+	"github.com/powersjcb/radiolab/pkg"
+	"github.com/powersjcb/radiolab/pkg/lib"
+	"github.com/powersjcb/radiolab/pkg/views"
 	"github.com/tochlab/go-hackrf/hackrf"
 	"log"
 	"time"
+)
+
+const (
+	sampleFreqHz uint64 = 104_500_000
+	sampleRateHz float64 = 10_000_000
 )
 
 func main() {
@@ -18,16 +25,16 @@ func main() {
 	}
 	defer teardown(dev)
 
-	if dev.SetFreq(104_500_000) != nil {
+	if dev.SetFreq(sampleFreqHz) != nil {
 		log.Printf("%v+", err)
 		return
 	}
-	if dev.SetSampleRate(20_000_000) != nil {
+	if dev.SetSampleRate(sampleRateHz) != nil {
 		log.Printf("%v+", err)
 		return
 	}
 	fmt.Println("starting RX...")
-	app, _ := core.NewApplication()
+	app, _ := pkg.NewApplication()
 	if dev.StartRX(app.NoopCallback) != nil {
 		log.Printf("%v+", err)
 		return
@@ -50,8 +57,15 @@ func main() {
 	}()
 
 	// todo enter event loop for processing input changes, until then we wait forever
-	time.Sleep(10 * time.Second)
-	fmt.Printf("%x+", app.Store.Get()[0].Data[:20])
+	time.Sleep(1 * time.Second)
+	iqData := lib.DecodeIQ(
+		app.Store.Get()[0].Data,
+	)
+	err = views.IQPlot(lib.Transform(iqData[:50000]))
+	if err != nil {
+		log.Println(err)
+		log.Fatal("failed")
+	}
 }
 
 func initDevice() (*hackrf.Device, error) {

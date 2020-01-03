@@ -1,4 +1,4 @@
-package core
+package pkg
 
 import (
 	"sort"
@@ -8,7 +8,7 @@ import (
 
 type Sample struct {
 	OccurredAt time.Time
-	Data []byte
+	Data []int8
 }
 
 func NewStore(samples int) Store {
@@ -36,7 +36,7 @@ func (s *Store) Get() []Sample {
 	return result
 }
 
-func (s *Store) Push(buf []byte) {
+func (s *Store) Push(buf []int8) {
 	s.m.Lock()
 	defer s.m.Unlock()
 	newSample := Sample{
@@ -69,7 +69,7 @@ type Application struct {
 	Store Store
 }
 
-func (a *Application) NoopCallback(buf []byte) error {
+func (a *Application) NoopCallback(buf []int8) error {
 	a.Store.Push(buf)
 	return nil
 }
