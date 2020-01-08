@@ -5,9 +5,23 @@ import (
 	"math/cmplx"
 )
 
-func Transform(data []complex128) []complex128 {
-	//return fft.FFT(data)
-	return bruteDFT(data)
+type SpectralPoint struct {
+	Frequency float64
+	Value     complex128
+}
+
+func NewSpectrum(data []complex128, sampleFreq uint64, sampleRate float64) []SpectralPoint{
+	dft := bruteDFT(data)
+	res := make([]SpectralPoint, len(data))
+	for n, fBin:= range dft {
+		freq := float64(n) * float64(sampleFreq) / float64(len(data))
+		res[n] = SpectralPoint{
+			Frequency: freq,
+			Value:     fBin,
+		}
+	}
+
+	return res
 }
 
 // bruteDFT Discrete Fourier transform - per https://en.wikipedia.org/wiki/Discrete_Fourier_transform

@@ -61,12 +61,19 @@ func main() {
 	iqData := lib.DecodeIQ(
 		app.Store.Get()[0].Data,
 	)
-	err = views.IQPlot(lib.Transform(iqData[:50000]))
+	err = views.IQPlot(iqData)
+	if err != nil {
+		log.Println(err)
+		log.Fatal("failed")
+	}
+
+	err = views.FFTPlot(lib.NewSpectrum(iqData[:50000], sampleFreqHz, sampleRateHz))
 	if err != nil {
 		log.Println(err)
 		log.Fatal("failed")
 	}
 }
+
 
 func initDevice() (*hackrf.Device, error) {
 	err := hackrf.Init()

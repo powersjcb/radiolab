@@ -1,25 +1,25 @@
 package views
 
 import (
+	"github.com/powersjcb/radiolab/pkg/lib"
 	"github.com/wcharczuk/go-chart"
 	"os"
 )
 
-// buf contains pairs of 8bit signed IQ values
-func IQPlot(points []complex128) error {
-	xValues := make([]float64, len(points))
-	yValues := make([]float64, len(points))
-	for i := 0; i < len(points); i++ {
-		xValues[i] = float64(i)
-		yValues[i] = real(points[i])
+func FFTPlot(fft []lib.SpectralPoint) error {
+	xValues := make([]float64, len(fft))
+	yValues := make([]float64, len(fft))
+	for i := 0; i < len(fft); i++ {
+		xValues[i] = fft[i].Frequency
+		yValues[i] = real(fft[i].Value)
 	}
 
 	graph := chart.Chart{
 		XAxis: chart.XAxis{
-			Name:           "time",
+			Name:           "Frequency, Hz",
 		},
 		YAxis: chart.YAxis{
-			Name:           "I",
+			Name:           "",
 		},
 		Series: []chart.Series{
 			chart.ContinuousSeries{
@@ -34,7 +34,7 @@ func IQPlot(points []complex128) error {
 		},
 	}
 
-	f, _ := os.Create("iq.png")
+	f, _ := os.Create("fft.png")
 	defer f.Close()
 	return graph.Render(chart.PNG, f)
 }
