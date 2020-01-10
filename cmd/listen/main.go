@@ -13,7 +13,7 @@ import (
 
 const (
 	sampleFreqHz uint64 = 104_500_000
-	sampleRateHz float64 = 10_000_000
+	sampleRateHz float64 = 20_000_000
 )
 
 func main() {
@@ -67,7 +67,7 @@ func main() {
 		log.Fatal("failed")
 	}
 
-	err = views.FFTPlot(lib.NewSpectrum(iqData[:50000], sampleFreqHz, sampleRateHz))
+	err = views.FFTPlot(lib.NewSpectrum(iqData, sampleFreqHz, sampleRateHz))
 	if err != nil {
 		log.Println(err)
 		log.Fatal("failed")
