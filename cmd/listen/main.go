@@ -4,11 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/powersjcb/radiolab/pkg"
-	"github.com/powersjcb/radiolab/pkg/lib"
-	"github.com/powersjcb/radiolab/pkg/views"
+	"github.com/powersjcb/radiolab/pkg/gateways"
 	"github.com/tochlab/go-hackrf/hackrf"
 	"log"
-	"time"
 )
 
 const (
@@ -33,45 +31,43 @@ func main() {
 		log.Printf("%v+", err)
 		return
 	}
+
 	fmt.Println("starting RX...")
 	app, _ := pkg.NewApplication()
 	if dev.StartRX(app.NoopCallback) != nil {
 		log.Printf("%v+", err)
 		return
 	}
+	err = app.Store.SetConfig(
+		pkg.Config{
+			SampleFrequency: sampleFreqHz,
+			SampleRate: sampleRateHz,
+		},
+	)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
-	ticker := time.NewTicker(250 * time.Millisecond)
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case _ = <-ticker.C:
-				fmt.Println("checking the buffer:")
-				for _, sample := range app.Store.Get() {
-					fmt.Printf("%s: samples: %d\n", sample.OccurredAt, len(sample.Data))
-				}
-			}
-		}
-	}()
+	server := gateways.NewHTTPServer(&app)
+	server.Start()
 
 	// todo enter event loop for processing input changes, until then we wait forever
-	time.Sleep(1 * time.Second)
-	iqData := lib.DecodeIQ(
-		app.Store.Get()[0].Data,
-	)
-	err = views.IQPlot(iqData)
-	if err != nil {
-		log.Println(err)
-		log.Fatal("failed")
-	}
+	//data  app.Store.Get()[0].Data
+	//iqData := lib.DecodeIQ(
+	//	,
+	//)
+	//err = views.IQPlot(iqData)
+	//if err != nil {
+	//	log.Println(err)
+	//	log.Fatal("failed")
+	//}
 
-	err = views.FFTPlot(lib.NewSpectrum(iqData, sampleFreqHz, sampleRateHz))
-	if err != nil {
-		log.Println(err)
-		log.Fatal("failed")
-	}
+	//err = views.FFTPlot(lib.NewSpectrum(iqData, sampleFreqHz, sampleRateHz))
+	//if err != nil {
+	//	log.Println(err)
+	//	log.Fatal("failed")
+	//}
+
 }
 
 

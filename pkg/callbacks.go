@@ -11,32 +11,53 @@ type Sample struct {
 	Data []int8
 }
 
+type Config struct {
+	SampleFrequency uint64
+	SampleRate      float64
+}
+
 func NewStore(samples int) Store {
 	return Store{
 		size: samples,
 		m:  sync.Mutex{},
-		db: make([]Sample, 0),
+		iq: make([]Sample, 0),
+		config: Config{},
 	}
 }
 
 type Store struct {
 	size int
 	m   sync.Mutex
-	db  []Sample
+	iq  []Sample
+	config Config
 	idx int
 }
 
-func (s *Store) Get() []Sample {
+func (s *Store) GetConfig() Config {
 	s.m.Lock()
 	defer s.m.Unlock()
-	result := s.db
+	return s.config
+}
+
+func (s *Store) SetConfig(c Config) error {
+	s.m.Lock()
+	defer s.m.Unlock()
+	s.config = c
+	// todo: validate config
+	return nil
+}
+
+func (s *Store) GetIQ() []Sample {
+	s.m.Lock()
+	defer s.m.Unlock()
+	result := s.iq
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].OccurredAt.Before(s.db[j].OccurredAt)
+		return result[i].OccurredAt.Before(s.iq[j].OccurredAt)
 	})
 	return result
 }
 
-func (s *Store) Push(buf []int8) {
+func (s *Store) PushIQ(buf []int8) {
 	s.m.Lock()
 	defer s.m.Unlock()
 	newSample := Sample{
@@ -44,19 +65,18 @@ func (s *Store) Push(buf []int8) {
 		Data: buf,
 	}
 
-	if len(s.db) < s.size {
+	if len(s.iq) < s.size {
 		// add to ring buffer
-		s.db = append(s.db, newSample)
+		s.iq = append(s.iq, newSample)
 	} else {
 		// rotate through ring buffer
-		nextIndex := (s.idx+1) % len(s.db)
-		s.db[nextIndex] = newSample
+		nextIndex := (s.idx+1) % len(s.iq)
+		s.iq[nextIndex] = newSample
 		s.idx = nextIndex
 	}
 }
 
 func NewApplication() (Application, error) {
-	// todo: extract
 	// allocate some storage
 	samples := 10 // samples of IQ data
 	store := NewStore(samples)
@@ -70,6 +90,6 @@ type Application struct {
 }
 
 func (a *Application) NoopCallback(buf []int8) error {
-	a.Store.Push(buf)
+	a.Store.PushIQ(buf)
 	return nil
 }

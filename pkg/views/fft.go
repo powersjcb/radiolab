@@ -4,8 +4,8 @@ import (
 	"github.com/powersjcb/radiolab/pkg/lib"
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
+	"io"
 	"math/cmplx"
-	"os"
 )
 
 var gridStyle = chart.Style{
@@ -14,7 +14,7 @@ var gridStyle = chart.Style{
 	StrokeWidth: 0.5,
 }
 
-func FFTPlot(fft []lib.SpectralPoint) error {
+func FFTPlot(w io.Writer, fft []lib.SpectralPoint) error {
 	xValues := make([]float64, len(fft))
 	yValues := make([]float64, len(fft))
 	for i := 0; i < len(fft); i++ {
@@ -46,7 +46,5 @@ func FFTPlot(fft []lib.SpectralPoint) error {
 		},
 	}
 
-	f, _ := os.Create("fft.png")
-	defer f.Close()
-	return graph.Render(chart.PNG, f)
+	return graph.Render(chart.PNG, w)
 }
